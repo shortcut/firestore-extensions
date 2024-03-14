@@ -34,10 +34,11 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 
-suspend fun CollectionReference.fetch(source: Source = Source.DEFAULT) = suspendCoroutine<QuerySnapshot> { c ->
-    get(source).addOnSuccessListener { collection -> c.resume(collection) }
-        .addOnFailureListener { e -> c.resumeWithException(e) }
-}
+suspend fun CollectionReference.fetch(source: Source = Source.DEFAULT) =
+    suspendCoroutine<QuerySnapshot> { c ->
+        get(source).addOnSuccessListener { collection -> c.resume(collection) }
+            .addOnFailureListener { e -> c.resumeWithException(e) }
+    }
 
 /**
  * Fetch the querySnapshot from cache ignoring exceptions.
@@ -54,11 +55,11 @@ private suspend fun CollectionReference.fetchCacheOrNull() = suspendCoroutine<Qu
  * Returns a flow that stops after receiving a value from the server.
  * Use this to read from cache and wait for a value from the server.
  */
-private fun DocumentReference.flowOnce(): Flow<DocumentSnapshot?> = asFlow().transformWhile { snapshot ->
-    emit(snapshot)
-    snapshot.metadata.isFromCache
-}
-
+private fun DocumentReference.flowOnce(): Flow<DocumentSnapshot?> =
+    asFlow().transformWhile { snapshot ->
+        emit(snapshot)
+        snapshot.metadata.isFromCache
+    }
 
 
 suspend fun Query.fetch(source: Source = Source.DEFAULT) = suspendCoroutine<QuerySnapshot> { c ->
@@ -66,13 +67,14 @@ suspend fun Query.fetch(source: Source = Source.DEFAULT) = suspendCoroutine<Quer
         .addOnFailureListener { e -> c.resumeWithException(e) }
 }
 
-private suspend fun Query.fetchOrNull(source: Source = Source.DEFAULT) = suspendCoroutine<QuerySnapshot?> { c ->
-    this.get(source).addOnCompleteListener { task ->
-        c.resume(
-            if (task.isSuccessful) task.result else null
-        )
+private suspend fun Query.fetchOrNull(source: Source = Source.DEFAULT) =
+    suspendCoroutine<QuerySnapshot?> { c ->
+        this.get(source).addOnCompleteListener { task ->
+            c.resume(
+                if (task.isSuccessful) task.result else null
+            )
+        }
     }
-}
 
 /**
  * Fetch the querySnapshot ignoring exceptions.
@@ -85,32 +87,35 @@ private suspend fun Query.fetchCacheOrNull() = suspendCoroutine<QuerySnapshot?> 
     }
 }
 
-suspend fun DocumentReference.fetch(source: Source = Source.DEFAULT) = suspendCoroutine<DocumentSnapshot> { c ->
-    get(source).addOnSuccessListener { snapshot -> c.resume(snapshot) }
-        .addOnFailureListener { e -> c.resumeWithException(e) }
-}
+suspend fun DocumentReference.fetch(source: Source = Source.DEFAULT) =
+    suspendCoroutine<DocumentSnapshot> { c ->
+        get(source).addOnSuccessListener { snapshot -> c.resume(snapshot) }
+            .addOnFailureListener { e -> c.resumeWithException(e) }
+    }
 
 /**
  * Fetch the documentReference ignoring exceptions.
  */
-suspend fun DocumentReference.fetchOrNull(source: Source = Source.DEFAULT) = suspendCoroutine<DocumentSnapshot?> { c ->
-    this.get(source).addOnCompleteListener { task ->
-        c.resume(
-            if (task.isSuccessful) task.result else null
-        )
+suspend fun DocumentReference.fetchOrNull(source: Source = Source.DEFAULT) =
+    suspendCoroutine<DocumentSnapshot?> { c ->
+        this.get(source).addOnCompleteListener { task ->
+            c.resume(
+                if (task.isSuccessful) task.result else null
+            )
+        }
     }
-}
 
 /**
  * Fetch the documentReference from cache ignoring exceptions.
  */
-private suspend fun DocumentReference.fetchCacheOrNull() = suspendCoroutine<DocumentSnapshot?> { c ->
-    this.get(Source.CACHE).addOnCompleteListener { task ->
-        c.resume(
-            if (task.isSuccessful) task.result else null
-        )
+private suspend fun DocumentReference.fetchCacheOrNull() =
+    suspendCoroutine<DocumentSnapshot?> { c ->
+        this.get(Source.CACHE).addOnCompleteListener { task ->
+            c.resume(
+                if (task.isSuccessful) task.result else null
+            )
+        }
     }
-}
 
 /**
  * Fetch an AggregateQuery result from the server ignoring exceptions.
@@ -184,7 +189,11 @@ suspend fun DocumentReference.setAsync(data: Any): Result<Unit> =
         this@setAsync.set(data)
         val callback = this@setAsync.addSnapshotListener(MetadataChanges.INCLUDE) { snapshot, e ->
             if (e != null) {
-                Log.e("firestore-extensions", "DocSnapshot changed. Encountered Firestore Exception.", e)
+                Log.e(
+                    "firestore-extensions",
+                    "DocSnapshot changed. Encountered Firestore Exception.",
+                    e
+                )
                 trySend(Result.failure(e))
             } else {
                 if (snapshot != null && snapshot.exists()) {
@@ -192,7 +201,10 @@ suspend fun DocumentReference.setAsync(data: Any): Result<Unit> =
                         trySend(Result.success(Unit))
                     }
                 } else {
-                    Log.e("firestore-extensions", "DocSnapshot changed. Snapshot is NULL or doesn't exist.")
+                    Log.e(
+                        "firestore-extensions",
+                        "DocSnapshot changed. Snapshot is NULL or doesn't exist."
+                    )
                     trySend(Result.failure(NullPointerException("Snapshot for DocumentReference with ID '${this@setAsync.id}' is null or doesn't exist.")))
                 }
             }
@@ -277,5 +289,8 @@ fun DocumentSnapshot.getTimestampOrNull(field: String) = (this[field] as? Timest
 fun DocumentSnapshot.getGeoPointOrNull(field: String) = (this[field] as? GeoPoint)
 
 fun DocumentSnapshot.getWildcardListOrNull(field: String) = (this[field] as? List<*>)
-inline fun <reified T> DocumentSnapshot.getListOrNull(field: String): List<T>? = getWildcardListOrNull(field)?.filterIsInstance<T>()
-inline fun <reified T> DocumentSnapshot.getListOrEmpty(field: String): List<T> = getListOrNull(field) ?: emptyList()
+inline fun <reified T> DocumentSnapshot.getListOrNull(field: String): List<T>? =
+    getWildcardListOrNull(field)?.filterIsInstance<T>()
+
+inline fun <reified T> DocumentSnapshot.getListOrEmpty(field: String): List<T> =
+    getListOrNull(field) ?: emptyList()
