@@ -25,11 +25,16 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "1.8"
+    }
+    publishing {
+        publishing {
+            singleVariant("release") { }
+        }
     }
 }
 
@@ -38,4 +43,18 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore-ktx")
 
     testImplementation("junit:junit:4.13.2")
+}
+
+publishing {
+    publications {
+        register<MavenPublication>("release") {
+            groupId = "com.github.shortcut"
+            artifactId = "firestore-extensions"
+            version = "1.0.0"
+
+            afterEvaluate {
+                from(components.getByName("release"))
+            }
+        }
+    }
 }
