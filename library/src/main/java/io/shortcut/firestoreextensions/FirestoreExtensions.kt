@@ -94,7 +94,7 @@ suspend fun DocumentReference.fetch(source: Source = Source.DEFAULT) =
     }
 
 /**
- * Fetch the documentReference ignoring exceptions.
+ * Fetch the DocumentSnapshot ignoring exceptions.
  */
 suspend fun DocumentReference.fetchOrNull(source: Source = Source.DEFAULT) =
     suspendCoroutine<DocumentSnapshot?> { c ->
@@ -106,7 +106,7 @@ suspend fun DocumentReference.fetchOrNull(source: Source = Source.DEFAULT) =
     }
 
 /**
- * Fetch the documentReference from cache ignoring exceptions.
+ * Fetch the DocumentSnapshot from cache ignoring exceptions.
  */
 private suspend fun DocumentReference.fetchCacheOrNull() =
     suspendCoroutine<DocumentSnapshot?> { c ->
