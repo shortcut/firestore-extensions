@@ -14,4 +14,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "firestore-extensions"
-include(":library")
+include(":firestore-extensions")
