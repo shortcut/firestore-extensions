@@ -61,6 +61,16 @@ fun DocumentReference.flowOnce(): Flow<DocumentSnapshot?> =
         snapshot.metadata.isFromCache
     }
 
+/**
+ * Returns a flow that stops after receiving a value from the server.
+ * Use this to read from cache and wait for a value from the server.
+ */
+fun Query.flowOnce(): Flow<QuerySnapshot?> =
+    asFlow().transformWhile { snapshot ->
+        emit(snapshot)
+        snapshot.metadata.isFromCache
+    }
+
 
 suspend fun Query.fetch(source: Source = Source.DEFAULT) = suspendCoroutine<QuerySnapshot> { c ->
     get(source).addOnSuccessListener { snapshot -> c.resume(snapshot) }
