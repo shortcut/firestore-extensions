@@ -43,7 +43,7 @@ suspend fun CollectionReference.fetch(source: Source = Source.DEFAULT) =
 /**
  * Fetch the querySnapshot from cache ignoring exceptions.
  */
-private suspend fun CollectionReference.fetchCacheOrNull() = suspendCoroutine<QuerySnapshot?> { c ->
+suspend fun CollectionReference.fetchCacheOrNull() = suspendCoroutine<QuerySnapshot?> { c ->
     this.get(Source.CACHE).addOnCompleteListener { task ->
         c.resume(
             if (task.isSuccessful) task.result else null
@@ -55,7 +55,7 @@ private suspend fun CollectionReference.fetchCacheOrNull() = suspendCoroutine<Qu
  * Returns a flow that stops after receiving a value from the server.
  * Use this to read from cache and wait for a value from the server.
  */
-private fun DocumentReference.flowOnce(): Flow<DocumentSnapshot?> =
+fun DocumentReference.flowOnce(): Flow<DocumentSnapshot?> =
     asFlow().transformWhile { snapshot ->
         emit(snapshot)
         snapshot.metadata.isFromCache
@@ -67,7 +67,7 @@ suspend fun Query.fetch(source: Source = Source.DEFAULT) = suspendCoroutine<Quer
         .addOnFailureListener { e -> c.resumeWithException(e) }
 }
 
-private suspend fun Query.fetchOrNull(source: Source = Source.DEFAULT) =
+suspend fun Query.fetchOrNull(source: Source = Source.DEFAULT) =
     suspendCoroutine<QuerySnapshot?> { c ->
         this.get(source).addOnCompleteListener { task ->
             c.resume(
@@ -79,7 +79,7 @@ private suspend fun Query.fetchOrNull(source: Source = Source.DEFAULT) =
 /**
  * Fetch the querySnapshot ignoring exceptions.
  */
-private suspend fun Query.fetchCacheOrNull() = suspendCoroutine<QuerySnapshot?> { c ->
+suspend fun Query.fetchCacheOrNull() = suspendCoroutine<QuerySnapshot?> { c ->
     this.get(Source.CACHE).addOnCompleteListener { task ->
         c.resume(
             if (task.isSuccessful) task.result else null
@@ -108,7 +108,7 @@ suspend fun DocumentReference.fetchOrNull(source: Source = Source.DEFAULT) =
 /**
  * Fetch the DocumentSnapshot from cache ignoring exceptions.
  */
-private suspend fun DocumentReference.fetchCacheOrNull() =
+suspend fun DocumentReference.fetchCacheOrNull() =
     suspendCoroutine<DocumentSnapshot?> { c ->
         this.get(Source.CACHE).addOnCompleteListener { task ->
             c.resume(
