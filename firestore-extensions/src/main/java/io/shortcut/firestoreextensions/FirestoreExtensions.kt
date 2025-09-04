@@ -1,7 +1,6 @@
 package io.shortcut.firestoreextensions
 
 import android.util.Log
-import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.AggregateQuery
 import com.google.firebase.firestore.AggregateSource
@@ -14,19 +13,14 @@ import com.google.firebase.firestore.MetadataChanges
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.Source
-import com.google.firebase.firestore.firestore
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.transformWhile
 import kotlin.coroutines.resume
@@ -271,6 +265,17 @@ fun Query.paginate(
     }
 }
 
+inline fun <reified T> Flow<QuerySnapshot>.mapDocumentsNotNull(
+    crossinline mapper: suspend (documentSnapShot: DocumentSnapshot) -> T?
+): Flow<List<T>> {
+    return mapIterableNotNull { doc ->
+        if (doc.exists()) {
+            mapper(doc!!)
+        } else {
+            null
+        }
+    }
+}
 
 fun DocumentSnapshot.getLongOrZero(field: String) =
     this[field]?.toString()?.toDoubleOrNull()?.toLong() ?: 0L
@@ -304,3 +309,48 @@ inline fun <reified T> DocumentSnapshot.getListOrNull(field: String): List<T>? =
 
 inline fun <reified T> DocumentSnapshot.getListOrEmpty(field: String): List<T> =
     getListOrNull(field) ?: emptyList()
+
+fun DocumentSnapshot.getListOfMapOrEmpty(field: String): List<Map<String, *>> =
+    getWildcardListOrNull(field)?.filterIsInstance<Map<String, *>>() ?: emptyList()
+
+/**
+ * Get a document field as Map<String, T>
+ * As all keys in firestore are strings, no need to add Key type as a parameter.
+ * value: V, In most cases this would be Any?
+ */
+inline fun <reified V> DocumentSnapshot.getMapOrNull(field: String): Map<String, V>? =
+    (get(field) as? Map<*, *>?)?.mapNotNull { (k, v) ->
+        if (k is String && v is V) Pair(k, v) else null
+    }?.toMap()
+
+inline fun <reified V> Map<String, Any>.getMapOrNull(field: String): Map<String, V>? =
+    (get(field) as? Map<*, *>?)?.mapNotNull { (k, v) ->
+        if (k is String && v is V) Pair(k, v) else null
+    }?.toMap()
+
+fun DocumentSnapshot.getLocalizedStringDataOrNull(field: String) =
+    getMapOrNull<String>(field)?.map { LocalizedStringEntry(it.key, it.value) }?.let { entries ->
+        LocalizedStringData(entries = entries)
+    }
+
+fun DocumentSnapshot.getLocalizedStringDataOrEmpty(field: String) =
+    getLocalizedStringDataOrNull(field) ?: LocalizedStringData(emptyList())
+
+fun Map<String, Any>.getLocalizedStringDataOrNull(field: String) =
+    getMapOrNull<String>(field)?.map { LocalizedStringEntry(it.key, it.value) }?.let { entries ->
+        LocalizedStringData(entries = entries)
+    }
+
+fun Map<String, Any>.getLocalizedStringDataOrEmpty(field: String) =
+    getLocalizedStringDataOrNull(field) ?: LocalizedStringData(emptyList())
+
+
+/**
+ * Flow helper function to transform iterable into a list of non-null values.
+ * Used in [mapDocumentsNotNull]
+ */
+inline fun <T, R> Flow<Iterable<T>>.mapIterableNotNull(
+    crossinline transform: suspend (value: T) -> R?
+): Flow<List<R>> = transform { value ->
+    return@transform emit(value.mapNotNull { transform(it) })
+}
